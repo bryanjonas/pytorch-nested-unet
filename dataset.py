@@ -53,15 +53,21 @@ class Dataset(torch.utils.data.Dataset):
         return len(self.img_ids)
 
     def __getitem__(self, idx):
+        from skimage.io import imread, imsave
+        import numpy as np
         img_id = self.img_ids[idx]
         
-        img = cv2.imread(os.path.join(self.img_dir, img_id + self.img_ext))
+        img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
+    
+        img = np.array((img[:,:,[4,2,1]]/(img[:,:,[4,2,1]].max()+1e-10)), dtype=np.float32)
+        img = np.array(img*256, dtype=np.uint8)
 
         mask = []
         for i in range(self.num_classes):
             mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
                         img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)[..., None])
         mask = np.dstack(mask)
+        
 
         if self.transform is not None:
             augmented = self.transform(image=img, mask=mask)
@@ -72,5 +78,6 @@ class Dataset(torch.utils.data.Dataset):
         img = img.transpose(2, 0, 1)
         mask = mask.astype('float32') / 255
         mask = mask.transpose(2, 0, 1)
+        
         
         return img, mask, {'img_id': img_id}

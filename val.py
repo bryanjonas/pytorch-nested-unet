@@ -16,7 +16,7 @@ from dataset import Dataset
 from metrics import iou_score
 from utils import AverageMeter
 
-
+device = torch.cuda.set_device('cuda:1')
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -48,9 +48,9 @@ def main():
                                            config['deep_supervision'])
 
     model = model.cuda()
-
+  
     # Data loading code
-    img_ids = glob(os.path.join('inputs', config['dataset'], 'images', '*' + config['img_ext']))
+    img_ids = glob(os.path.join(config['dataset'], 'images', '*' + config['img_ext']))
     img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
 
     _, val_img_ids = train_test_split(img_ids, test_size=0.2, random_state=41)
@@ -82,12 +82,15 @@ def main():
     avg_meter = AverageMeter()
 
     for c in range(config['num_classes']):
-        os.makedirs(os.path.join('outputs', config['name'], str(c)), exist_ok=True)
+        output_dir = '/lfs/jonas/unetplus/'
+        os.makedirs(os.path.join(output_dir, str(c)), exist_ok=True)
     with torch.no_grad():
         for input, target, meta in tqdm(val_loader, total=len(val_loader)):
+            
             input = input.cuda()
+   
             target = target.cuda()
-
+ 
             # compute output
             if config['deep_supervision']:
                 output = model(input)[-1]
@@ -98,10 +101,10 @@ def main():
             avg_meter.update(iou, input.size(0))
 
             output = torch.sigmoid(output).cpu().numpy()
-
+            
             for i in range(len(output)):
                 for c in range(config['num_classes']):
-                    cv2.imwrite(os.path.join('outputs', config['name'], str(c), meta['img_id'][i] + '.jpg'),
+                    cv2.imwrite(os.path.join(output_dir, str(c), meta['img_id'][i] + '.jpg'),
                                 (output[i, c] * 255).astype('uint8'))
 
     print('IoU: %.4f' % avg_meter.avg)
