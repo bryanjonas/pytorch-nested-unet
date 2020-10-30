@@ -1,0 +1,3 @@
+python val.py --name /data/spacenet/bldg/data/pytorch-train_NestedUNet_woDS
+
+python train.py --dataset /data/spacenet/bldg/data/pytorch-train --arch NestedUNet --input_channels 3 --input_w 256 --input_h 256 --num_classes 1 --batch_size 4 --img_ext .tif --mask_ext .tif
