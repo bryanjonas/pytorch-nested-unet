@@ -95,7 +95,11 @@ def parse_args():
                         metavar='N', help='early stopping (default: -1)')
     
     parser.add_argument('--num_workers', default=4, type=int)
-
+    
+    ###ADD argument to resume training
+    parser.add_argument('--saved_model', default=None, type=str)
+    ###
+    
     config = parser.parse_args()
 
     return config
@@ -124,7 +128,7 @@ def train(config, train_loader, model, criterion, optimizer):
             output = model(input)
             loss = criterion(output, target)
             iou = iou_score(output, target)
-
+        
         # compute gradient and do optimizing step
         optimizer.zero_grad()
         loss.backward()
@@ -194,6 +198,7 @@ def main():
             config['name'] = '%s_%s_wDS' % (config['dataset'], config['arch'])
         else:
             config['name'] = '%s_%s_woDS' % (config['dataset'], config['arch'])
+    
     os.makedirs('models/%s' % config['name'], exist_ok=True)
 
     print('-' * 20)
@@ -243,6 +248,9 @@ def main():
     else:
         raise NotImplementedError
 
+    #Resume training by loading model
+    model.load_state_dict(torch.load(config['saved_model']))
+    
     # Data loading code
     img_ids = glob(os.path.join(config['dataset'], 'images', '*' + config['img_ext']))
     img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
