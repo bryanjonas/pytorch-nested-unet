@@ -15,13 +15,22 @@ class BCEDiceLoss(nn.Module):
         super().__init__()
 
     def forward(self, input, target):
+        # input size is (batch, 1, 256, 256)
+        # target size is (batch, 1, 256, 256)
+        
+        #https://pytorch.org/docs/master/generated/torch.nn.BCEWithLogitsLoss.html#torch.nn.BCEWithLogitsLoss
         bce = F.binary_cross_entropy_with_logits(input, target)
+        
         smooth = 1e-5
         
         input = torch.sigmoid(input)
+        #input still same shape
         
+        #num will be equal to batch_size (first element of tensor)
         num = target.size(0)
         
+        #basically flattens the array of predictions
+        # ie. goes from (4, 1, 256, 256) to (4, 65536)
         input = input.view(num, -1)
         
         target = target.view(num, -1)
