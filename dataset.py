@@ -61,11 +61,13 @@ class Dataset(torch.utils.data.Dataset):
     
         img = np.array((img[:,:,[4,2,1]]/(img[:,:,[4,2,1]].max()+1e-10)), dtype=np.float32)
         img = np.array(img*256, dtype=np.uint8)
-
+        
         mask = []
         for i in range(self.num_classes):
-            mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
-                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)[..., None])
+            img_mask = cv2.imread(os.path.join(self.mask_dir, str(i),
+                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)
+            img_mask = 255 - img_mask 
+            mask.append(img_mask[..., None])
         mask = np.dstack(mask)
         
 

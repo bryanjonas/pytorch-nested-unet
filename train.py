@@ -20,6 +20,7 @@ import losses
 from dataset import Dataset
 from metrics import iou_score
 from utils import AverageMeter, str2bool
+import cv2
 
 ARCH_NAMES = archs.__all__
 LOSS_NAMES = losses.__all__
@@ -174,7 +175,7 @@ def validate(config, val_loader, model, criterion):
                 output = model(input)
                 loss = criterion(output, target)
                 iou = iou_score(output, target)
-
+            
             avg_meters['loss'].update(loss.item(), input.size(0))
             avg_meters['iou'].update(iou, input.size(0))
 
@@ -184,8 +185,14 @@ def validate(config, val_loader, model, criterion):
             ])
             pbar.set_postfix(postfix)
             pbar.update(1)
+            
         pbar.close()
+        
+        outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
+        
+        cv2.imwrite('mask.jpg', (outsave * 255).astype('uint8'))
 
+        
     return OrderedDict([('loss', avg_meters['loss'].avg),
                         ('iou', avg_meters['iou'].avg)])
 
@@ -249,7 +256,8 @@ def main():
         raise NotImplementedError
 
     #Resume training by loading model
-    model.load_state_dict(torch.load(config['saved_model']))
+    if config['saved_model'] != None:
+        model.load_state_dict(torch.load(config['saved_model']))
     
     # Data loading code
     img_ids = glob(os.path.join(config['dataset'], 'images', '*' + config['img_ext']))
@@ -265,12 +273,14 @@ def main():
             transforms.RandomBrightness(),
             transforms.RandomContrast(),
         ], p=1),
-        transforms.Resize(config['input_h'], config['input_w']),
+        #transforms.Resize(config['input_h'], config['input_w']),
+        transforms.RandomCrop(config['input_h'], config['input_w']),
         transforms.Normalize(),
     ])
 
     val_transform = Compose([
-        transforms.Resize(config['input_h'], config['input_w']),
+        #transforms.Resize(config['input_h'], config['input_w']),
+        transforms.RandomCrop(config['input_h'], config['input_w']),
         transforms.Normalize(),
     ])
 

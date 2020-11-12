@@ -72,6 +72,7 @@ def main():
         mask_ext=config['mask_ext'],
         num_classes=config['num_classes'],
         transform=val_transform)
+    
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=config['batch_size'],
