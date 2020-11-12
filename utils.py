@@ -64,6 +64,7 @@ def create_tiles(image, corners, network_size):
 
 
 def assemble_pred(predArr, corners, image, network_size):
+
     pred_image = np.zeros((image.shape[0], image.shape[1]))
     pred_image[:,:] = np.nan #NaN so we only average the overlap
     corn_idx = 0
