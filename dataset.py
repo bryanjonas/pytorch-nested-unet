@@ -66,7 +66,7 @@ class Dataset(torch.utils.data.Dataset):
         for i in range(self.num_classes):
             img_mask = cv2.imread(os.path.join(self.mask_dir, str(i),
                         img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)
-            img_mask = 255 - img_mask 
+            #img_mask = 255 - img_mask 
             mask.append(img_mask[..., None])
         mask = np.dstack(mask)
         
