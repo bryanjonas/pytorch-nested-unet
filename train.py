@@ -275,13 +275,13 @@ def main():
         ], p=1),
         #transforms.Resize(config['input_h'], config['input_w']),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        transforms.Normalize(),
+        #transforms.Normalize(),
     ])
 
     val_transform = Compose([
         #transforms.Resize(config['input_h'], config['input_w']),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        transforms.Normalize(),
+        #transforms.Normalize(),
     ])
 
     train_dataset = Dataset(
