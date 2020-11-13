@@ -59,22 +59,30 @@ class Dataset(torch.utils.data.Dataset):
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
     
-        img = np.array((img[:,:,[4,2,1]]/(img[:,:,[4,2,1]].max()+1e-10)), dtype=np.float32)
-        img = np.array(img*256, dtype=np.uint8)
-
+        img = np.array((img[:,:,(4,2,1)]), dtype=np.float32)
+        #img = np.array(img*256, dtype=np.uint8)
+        mean_list = (331.35564105,463.62619325,357.02413693)
+        std_list = (124.93471721,133.2585851,84.44538196)
+        
+        for chan in range(0,3):
+            img[:,:,chan] = (img[:,:,chan] - mean_list[chan]) / std_list[chan]
+        
         mask = []
         for i in range(self.num_classes):
-            mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
-                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)[..., None])
+            img_mask = cv2.imread(os.path.join(self.mask_dir, str(i),
+                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)
+            #img_mask = 255 - img_mask 
+            mask.append(img_mask[..., None])
         mask = np.dstack(mask)
-        
 
         if self.transform is not None:
             augmented = self.transform(image=img, mask=mask)
             img = augmented['image']
             mask = augmented['mask']
-        
-        img = img.astype('float32') / 255
+
+        #print(img.max())
+        #print(img.min())
+        img = img.astype('float32')
         img = img.transpose(2, 0, 1)
         mask = mask.astype('float32') / 255
         mask = mask.transpose(2, 0, 1)

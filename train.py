@@ -263,18 +263,22 @@ def main():
     train_transform = Compose([
         transforms.RandomRotate90(),
         transforms.Flip(),
-        OneOf([
-            transforms.HueSaturationValue(),
-            transforms.RandomBrightness(),
-            transforms.RandomContrast(),
-        ], p=1),
+        #OneOf([
+        #    transforms.HueSaturationValue(),
+        #    transforms.RandomBrightness(),
+        #    transforms.RandomContrast(),
+        #], p=1),
         transforms.Resize(config['input_h'], config['input_w']),
-        transforms.Normalize(),
+        #transforms.Normalize((331.35564105,463.62619325,357.02413693),
+        #                     (124.93471721,133.2585851,84.44538196)),
     ])
+            
+    
 
     val_transform = Compose([
         transforms.Resize(config['input_h'], config['input_w']),
-        transforms.Normalize(),
+        #transforms.Normalize((331.35564105,463.62619325,357.02413693),
+        #                     (124.93471721,133.2585851,84.44538196))
     ])
 
     train_dataset = Dataset(
