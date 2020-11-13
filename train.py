@@ -268,11 +268,11 @@ def main():
     train_transform = Compose([
         transforms.RandomRotate90(),
         transforms.Flip(),
-        OneOf([
-            transforms.HueSaturationValue(),
-            transforms.RandomBrightness(),
-            transforms.RandomContrast(),
-        ], p=1),
+        #OneOf([
+        #    transforms.HueSaturationValue(),
+        #    transforms.RandomBrightness(),
+        #    transforms.RandomContrast(),
+        #], p=1),
         #transforms.Resize(config['input_h'], config['input_w']),
         transforms.RandomCrop(config['input_h'], config['input_w']),
         #transforms.Normalize(),
