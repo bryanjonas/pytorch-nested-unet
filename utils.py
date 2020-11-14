@@ -1,9 +1,5 @@
 import numpy as np
 
-def make_predictions(model, tilesArr):
-    predArr = model.predict(tilesArr)
-    return predArr
-
 def find_corners(image_size, tile_size, network_size, overlap=0):
     #Do the math to find the corners of the tiles:
     #Set up variables for iteration
@@ -62,9 +58,7 @@ def create_tiles(image, corners, network_size):
         
     return tilesArr
 
-
 def assemble_pred(predArr, corners, image, network_size):
-
     pred_image = np.zeros((image.shape[0], image.shape[1]))
     pred_image[:,:] = np.nan #NaN so we only average the overlap
     corn_idx = 0
@@ -87,73 +81,10 @@ def assemble_pred(predArr, corners, image, network_size):
         new_img_tile = list(map(lambda x, y: y if np.isnan(x) else (x+y)/2, flat_img_tile, flat_pred_tile)) #Average the predictions if x isn't NaN
 
         new_img_tile = np.asarray(new_img_tile).reshape(tile_shape)
+        
+        print(tile_shape)
     
         pred_image[topY:botY, topX:botX] = new_img_tile
             
         corn_idx += 1  
-    return pred_image
-
-def preprocessing_image_ms(tilesArr, mean, std):
-    #Loop over tiles
-    stdTiles = []
-    for tileIdx in range(0, tilesArr.shape[0]):
-        tile = tilesArr[tileIdx,...]
-    # loop over image channels
-        for idx, mean_value in enumerate(mean):
-            tile[..., idx] -= mean_value
-            tile[..., idx] /= std[idx]
-        stdTiles += [tile]
-    stdTilesArr = np.array(stdTiles)
-    return stdTilesArr        
-
-def conduct_inference(model, bands, channels, test_images, network_size=None, overlap=0, save_path=None):
-    from skimage.io import imread, imsave
-    import os
-    from skimage.color import rgb2gray
-    
-    predArr_list = []
-    pred_image_list = []
-    image_list = []
-    for idx, test_image in enumerate(test_images):
-        image = np.array(imread(test_image), dtype=float) #Load image
-        image = image[:,:,bands]
-        if channels==1:
-            image = rgb2gray(image)
-            image = image.reshape(image.shape + (1,))
-
-        for band in range(0, image.shape[2]):
-            mean = image[:,:,band].mean()
-            std = image[:,:,band].std()
-            image[:,:,band] -= mean
-            image[:,:,band] /= std
-        
-        image_size = list(image.shape[0:2]) #Get image size and push to a list
-        tile_size = list(network_size[0:2]) #Get tile size as first two dimensions of network_size
-        
-        corners = find_corners(image_size, tile_size, network_size, overlap)
-
-        tilesArr = create_tiles(image, corners, network_size)
-        
-        predArr = make_predictions(model, tilesArr)
-        
-        #Average the predictions
-        mergePredArr = predArr[:,:,:,0] / (predArr[:,:,:,0] + predArr[:,:,:,1])
-        
-        pred_image = assemble_pred(mergePredArr, corners, image, network_size)
-        
-        image_list += [image]
-        predArr_list += [predArr]
-        pred_image_list += [pred_image]
-        
-        if save_path != None:
-            imageName = os.path.split(test_image)[1]
-            fullSavePath = os.path.join(save_path, imageName)
-            imsave(fullSavePath, pred_image)
-    
-    images = np.array(image_list)
-    predArrs = np.array(predArr_list)
-    pred_images = np.array(pred_image_list)
-    
-    
-    
-    return predArrs, pred_images, images
+    return pred_image      
