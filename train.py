@@ -60,7 +60,9 @@ def parse_args():
                         ' (default: BCEDiceLoss)')
     
     # dataset
-    parser.add_argument('--dataset', default='dsb2018_96',
+    parser.add_argument('--train_dataset', default=None,
+                        help='dataset name')
+    parser.add_argument('--val_dataset', default=None,
                         help='dataset name')
     parser.add_argument('--img_ext', default='.png',
                         help='image file extension')
@@ -255,10 +257,11 @@ def main():
         model.load_state_dict(torch.load(config['saved_model']))
     
     # Data loading code
-    img_ids = glob(os.path.join(config['dataset'], 'images', '*' + config['img_ext']))
-    img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
-
-    train_img_ids, val_img_ids = train_test_split(img_ids, test_size=0.2, random_state=41)
+    train_img_ids = glob(os.path.join(config['train_dataset'], 'images', '*' + config['img_ext']))
+    train_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
+    
+    val_img_ids = glob(os.path.join(config['val_dataset'], 'images', '*' + config['img_ext']))
+    val_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
 
     train_transform = Compose([
         transforms.RandomRotate90(),
