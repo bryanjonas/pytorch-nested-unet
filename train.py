@@ -192,7 +192,7 @@ def validate(config, val_loader, model, criterion):
         
         outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         
-        cv2.imwrite('mask.jpg', (outsave * 255).astype('uint8'))
+        cv2.imwrite('pred_mask.png', (outsave * 255).astype('uint8'))
 
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
@@ -204,9 +204,9 @@ def main():
 
     if config['name'] is None:
         if config['deep_supervision']:
-            config['name'] = '%s_%s_wDS' % (config['dataset'], config['arch'])
+            config['name'] = '%s_%s_wDS' % (config['train_dataset'], config['arch'])
         else:
-            config['name'] = '%s_%s_woDS' % (config['dataset'], config['arch'])
+            config['name'] = '%s_%s_woDS' % (config['train_dataset'], config['arch'])
     
     os.makedirs('models/%s' % config['name'], exist_ok=True)
 
@@ -263,10 +263,10 @@ def main():
     
     # Data loading code
     train_img_ids = glob(os.path.join(config['train_dataset'], 'images', '*' + config['img_ext']))
-    train_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
+    train_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in train_img_ids]
     
     val_img_ids = glob(os.path.join(config['val_dataset'], 'images', '*' + config['img_ext']))
-    val_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
+    val_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in val_img_ids]
 
     train_transform = Compose([
         transforms.RandomRotate90(),
@@ -289,8 +289,8 @@ def main():
 
     train_dataset = Dataset(
         img_ids=train_img_ids,
-        img_dir=os.path.join('inputs', config['dataset'], 'images'),
-        mask_dir=os.path.join('inputs', config['dataset'], 'masks'),
+        img_dir=os.path.join('inputs', config['train_dataset'], 'images'),
+        mask_dir=os.path.join('inputs', config['train_dataset'], 'masks'),
         img_ext=config['img_ext'],
         mask_ext=config['mask_ext'],
         num_classes=config['num_classes'],
@@ -298,8 +298,8 @@ def main():
     
     val_dataset = Dataset(
         img_ids=val_img_ids,
-        img_dir=os.path.join('inputs', config['dataset'], 'images'),
-        mask_dir=os.path.join('inputs', config['dataset'], 'masks'),
+        img_dir=os.path.join('inputs', config['val_dataset'], 'images'),
+        mask_dir=os.path.join('inputs', config['val_dataset'], 'masks'),
         img_ext=config['img_ext'],
         mask_ext=config['mask_ext'],
         num_classes=config['num_classes'],
