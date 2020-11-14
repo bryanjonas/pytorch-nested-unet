@@ -59,7 +59,7 @@ class Dataset(torch.utils.data.Dataset):
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
     
-        img = np.array((img[:,:,(4,2,1)]), dtype=np.float32)
+        img = np.array((img[:,:,]), dtype=np.float32)
         #img = np.array(img*256, dtype=np.uint8)
         mean_list = (331.35564105,463.62619325,357.02413693)
         std_list = (124.93471721,133.2585851,84.44538196)
