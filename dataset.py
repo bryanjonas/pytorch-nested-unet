@@ -61,6 +61,24 @@ class Dataset(torch.utils.data.Dataset):
         
         img = img.reshape(img.shape + (1,))
         
+        img_m = img.mean()
+        img_sd = img.std()+1e-12
+        
+        #img_m = 465.44523522
+        #img_cd = 166.47386568
+        norm_trans = transforms.Normalize(mean = img_m,
+                                          std = img_sd,
+                                          max_pixel_value = (2**16)-1, 
+                                          always_apply = True)
+        
+        augmented = norm_trans(image = img)
+        img = augmented['image']
+        
+        #Hyperbolic Tangent Normalization    
+        #img = 0.5 * (np.tanh((0.01 * (img - img_m))/img_sd) + 1)
+        
+        #print(img.max())
+        #print(img.min())
         mask = []
         for i in range(self.num_classes):
             mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
@@ -72,22 +90,7 @@ class Dataset(torch.utils.data.Dataset):
             img = augmented['image']
             mask = augmented['mask']
             
-        img_m = img.mean()
-        img_sd = img.std()+1e-12
 
-        norm_trans = transforms.Normalize(mean = img_m,
-                                          std = img_sd,
-                                          max_pixel_value = 1.0, 
-                                          always_apply = True)
-        
-        #augmented = norm_trans(image = img, mask = mask)
-        #img = augmented['image']
-        #mask = augmented['mask']
-            
-        img = 0.5 * (np.tanh((0.01 * (img - img_m))/img_sd) + 1)
-        
-        #print(img.max())
-        #print(img.min())
         
         img = img.astype('float32')
         img = img.transpose(2, 0, 1)
