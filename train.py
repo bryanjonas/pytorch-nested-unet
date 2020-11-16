@@ -352,10 +352,12 @@ def main():
         trigger += 1
 
         if val_log['iou'] > best_iou:
-            torch.save(model.state_dict(), 'models/%s/model.pth' %
-                       config['name'])
+            torch.save(model.state_dict(), '/lfs/jonas/unetplus/model.pth')
             best_iou = val_log['iou']
             print("=> saved best model")
+            f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
+            f.write('Epoch: %i, Loss: %f, IOU: %f \n' % (epoch, val_log['val_loss'], val_log['iou']))
+            f.close()
             trigger = 0
 
         # early stopping
