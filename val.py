@@ -50,7 +50,7 @@ def main():
     model = model.cuda()
   
     # Data loading code
-    img_ids = glob(os.path.join(config['dataset'], 'images', '*' + config['img_ext']))
+    img_ids = glob(os.path.join(config['train_dataset'], 'images', '*' + config['img_ext']))
     img_ids = [os.path.splitext(os.path.basename(p))[0] for p in img_ids]
 
     _, val_img_ids = train_test_split(img_ids, test_size=0.2, random_state=41)
@@ -61,13 +61,13 @@ def main():
 
     val_transform = Compose([
         transforms.Resize(config['input_h'], config['input_w']),
-        transforms.Normalize(),
+        #transforms.Normalize(),
     ])
 
     val_dataset = Dataset(
         img_ids=val_img_ids,
-        img_dir=os.path.join('inputs', config['dataset'], 'images'),
-        mask_dir=os.path.join('inputs', config['dataset'], 'masks'),
+        img_dir=os.path.join('inputs', config['train_dataset'], 'images'),
+        mask_dir=os.path.join('inputs', config['train_dataset'], 'masks'),
         img_ext=config['img_ext'],
         mask_ext=config['mask_ext'],
         num_classes=config['num_classes'],
