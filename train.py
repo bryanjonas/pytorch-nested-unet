@@ -356,7 +356,7 @@ def main():
             best_iou = val_log['iou']
             print("=> saved best model")
             f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
-            f.write('Epoch: %i, Loss: %f, IOU: %f \n' % (epoch, val_log['val_loss'], val_log['iou']))
+            f.write('Epoch: %i, Loss: %f, IOU: %f \n' % (epoch, val_log['loss'], val_log['iou']))
             f.close()
             trigger = 0
 
