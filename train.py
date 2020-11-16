@@ -192,7 +192,7 @@ def validate(config, val_loader, model, criterion):
         
         outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         
-        cv2.imwrite('pred_mask.png', (outsave * 255).astype('uint8'))
+        cv2.imwrite('/lfs/jonas/unetplus/PAN/mask_prog/pred_mask.png', (outsave * 255).astype('uint8'))
 
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
