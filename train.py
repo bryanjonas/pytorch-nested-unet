@@ -269,22 +269,15 @@ def main():
     val_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in val_img_ids]
 
     train_transform = Compose([
-        transforms.RandomRotate90(),
-        transforms.Flip(),
-        #OneOf([
-        #    transforms.HueSaturationValue(),
-        #    transforms.RandomBrightness(),
-        #    transforms.RandomContrast(),
-        #], p=1),
-        #transforms.Resize(config['input_h'], config['input_w']),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        #transforms.Normalize(),
+        #transforms.ToFloat(always_apply = True),
+        transforms.ShiftScaleRotate(shift_limit=0.10, scale_limit=0.10, rotate_limit=180, p=0.5),
+        transforms.Flip(),
     ])
 
     val_transform = Compose([
-        #transforms.Resize(config['input_h'], config['input_w']),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        #transforms.Normalize(),
+        #transforms.ToFloat(always_apply = True),
     ])
 
     train_dataset = Dataset(

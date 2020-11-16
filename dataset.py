@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import torch
 import torch.utils.data
-
+from albumentations.augmentations import transforms
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, img_ids, img_dir, mask_dir, img_ext, mask_ext, num_classes, transform=None):
@@ -59,26 +59,35 @@ class Dataset(torch.utils.data.Dataset):
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
         
-        img = img.astype(np.float32)
-        
-        mean = 465.44523521694623
-        std = 166.47386568176245
-        
-        img = (img - mean) / std
-        
         img = img.reshape(img.shape + (1,))
         
         mask = []
         for i in range(self.num_classes):
-            img_mask = cv2.imread(os.path.join(self.mask_dir, str(i),
-                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)
-            mask.append(img_mask[..., None])
+            mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
+                        img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)[..., None])
         mask = np.dstack(mask)
-
+        
         if self.transform is not None:
             augmented = self.transform(image=img, mask=mask)
             img = augmented['image']
             mask = augmented['mask']
+            
+        img_m = img.mean()
+        img_sd = img.std()+1e-12
+
+        norm_trans = transforms.Normalize(mean = img_m,
+                                          std = img_sd,
+                                          max_pixel_value = 1.0, 
+                                          always_apply = True)
+        
+        #augmented = norm_trans(image = img, mask = mask)
+        #img = augmented['image']
+        #mask = augmented['mask']
+            
+        img = 0.5 * (np.tanh((0.01 * (img - img_m))/img_sd) + 1)
+        
+        #print(img.max())
+        #print(img.min())
         
         img = img.astype('float32')
         img = img.transpose(2, 0, 1)
