@@ -81,8 +81,6 @@ def assemble_pred(predArr, corners, image, network_size):
         new_img_tile = list(map(lambda x, y: y if np.isnan(x) else (x+y)/2, flat_img_tile, flat_pred_tile)) #Average the predictions if x isn't NaN
 
         new_img_tile = np.asarray(new_img_tile).reshape(tile_shape)
-        
-        print(tile_shape)
     
         pred_image[topY:botY, topX:botX] = new_img_tile
             
