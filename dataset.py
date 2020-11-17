@@ -61,8 +61,6 @@ class Dataset(torch.utils.data.Dataset):
         
         img = img.reshape(img.shape + (1,))
         
-        img = img / 2**11
-        
         img_m = img.mean()
         img_sd = img.std()+1e-12
         
@@ -75,12 +73,20 @@ class Dataset(torch.utils.data.Dataset):
         
         #augmented = norm_trans(image = img)
         #img = augmented['image']
+        
         img = (img - img_m) / (img_sd)
+        
         #Hyperbolic Tangent Normalization    
         #img = 0.5 * (np.tanh((0.01 * (img - img_m))/img_sd) + 1)
         
         #print(img.max())
         #print(img.min())
+        
+        #for chan in range(0, img.shape[2]):
+        #    chan_mean = img[:,:,chan].mean()
+        #    chan_sd = img[:,:,chan].std()
+        #    img[:,:,chan] = (img[:,:,chan] * chan_mean) / chan_sd
+        
         mask = []
         for i in range(self.num_classes):
             mask.append(cv2.imread(os.path.join(self.mask_dir, str(i),
