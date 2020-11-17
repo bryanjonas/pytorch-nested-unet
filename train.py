@@ -271,8 +271,8 @@ def main():
     train_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
         #transforms.ToFloat(always_apply = True),
-        transforms.ShiftScaleRotate(shift_limit=0.10, scale_limit=0.10, rotate_limit=90, p=0.5),
-        transforms.Flip(),
+        transforms.ShiftScaleRotate(shift_limit=0.25, scale_limit=0.5, rotate_limit=90, p=0.5),
+        transforms.Flip(p=0.25),
     ])
 
     val_transform = Compose([
