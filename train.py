@@ -164,7 +164,7 @@ def validate(config, val_loader, model, criterion):
             
             avg_meters['loss'].update(loss.item(), input.size(0))
             avg_meters['acc'].update(accuracy.item(), input.size(0))
-
+            
             postfix = OrderedDict([
                 ('loss', avg_meters['loss'].avg),
                 ('acc', avg_meters['acc'].avg)])
@@ -172,13 +172,20 @@ def validate(config, val_loader, model, criterion):
             pbar.update(1)
             
         pbar.close()
-
+        insave0 = input[-1,:,:,:].cpu().numpy()
+        insave0 = insave0.transpose(1,2,0)
+        cv2.imwrite("pred_img.png", insave0)
+        print(target.shape)
+        targsave0 = target[-1,0,:,:].cpu.numpy()
+        targsave1 = target[-1,1,:,:].cpu.numpy()
+        targsave2 = target[-1,2,:,:].cpu.numpy()
+        np.savetxt('bldg-targ.npy', targsave0)
+        np.savetxt('back-targ.npy', targsave1)
+        np.savetxt('out-targ.npy', targsave2)
+ 
         outsave0 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         outsave1 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
         outsave2 = torch.sigmoid(output[-1,2,:,:]).cpu().numpy()
-        cv2.imwrite('pred_bldg.png', (outsave0 * 255).astype('uint8'))
-        cv2.imwrite('pred_back.png', (outsave1 * 255).astype('uint8'))
-        cv2.imwrite('pred_out.png', (outsave2 * 255).astype('uint8'))
         np.savetxt('bldg.npy', outsave0)
         np.savetxt('back.npy', outsave1)
         np.savetxt('out.npy', outsave2)
@@ -205,13 +212,8 @@ def main():
 
     with open('models/%s/config.yml' % config['name'], 'w') as f:
         yaml.dump(config, f)
-
-    # define loss function (criterion)
-    #if config['loss'] == 'BCEWithLogitsLoss':
-    #    criterion = nn.BCEWithLogitsLoss().cuda()
-    #else:
-    #    criterion = losses.__dict__[config['loss']]().cuda()
-    
+        
+    # weight given to loss for pixels of background, building interior and building border classes
     loss_weights = torch.tensor([0.1, 0.8, 0.1])
     criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
     

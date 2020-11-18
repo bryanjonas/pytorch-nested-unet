@@ -94,8 +94,8 @@ class Dataset(torch.utils.data.Dataset):
         edges = self.find_edges(bldg_mask)
         edges = edges.astype(np.bool)
     
-        mask = np.ones(shape=bldg_mask.shape)
-        mask[bldg_mask] = 0
+        mask = np.zeros(shape=bldg_mask.shape)
+        mask[bldg_mask] = 1
         mask[edges] = 2
         
   
