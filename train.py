@@ -126,11 +126,11 @@ def train(config, train_loader, model, criterion, optimizer):
             for output in outputs:
                 loss += criterion(output, target)
             loss /= len(outputs)
-            iou = iou_score(outputs[-1], target)
+            #iou = iou_score(outputs[-1], target)
         else:
             output = model(input)
             loss = criterion(output, target)
-            iou = iou_score(output, target)
+            #iou = iou_score(output, target)
         
         # compute gradient and do optimizing step
         optimizer.zero_grad()
@@ -138,23 +138,25 @@ def train(config, train_loader, model, criterion, optimizer):
         optimizer.step()
 
         avg_meters['loss'].update(loss.item(), input.size(0))
-        avg_meters['iou'].update(iou, input.size(0))
+        #avg_meters['iou'].update(iou, input.size(0))
 
         postfix = OrderedDict([
             ('loss', avg_meters['loss'].avg),
-            ('iou', avg_meters['iou'].avg),
+            #('iou', avg_meters['iou'].avg),
         ])
         pbar.set_postfix(postfix)
         pbar.update(1)
     pbar.close()
 
     return OrderedDict([('loss', avg_meters['loss'].avg),
-                        ('iou', avg_meters['iou'].avg)])
+                        #('iou', avg_meters['iou'].avg)
+                       ])
 
 
 def validate(config, val_loader, model, criterion):
     avg_meters = {'loss': AverageMeter(),
-                  'iou': AverageMeter()}
+                  #'iou': AverageMeter()
+                 }
 
     # switch to evaluate mode
     model.eval()
@@ -172,18 +174,18 @@ def validate(config, val_loader, model, criterion):
                 for output in outputs:
                     loss += criterion(output, target)
                 loss /= len(outputs)
-                iou = iou_score(outputs[-1], target)
+                #iou = iou_score(outputs[-1], target)
             else:
                 output = model(input)
                 loss = criterion(output, target)
-                iou = iou_score(output, target)
+                #iou = iou_score(output, target)
             
             avg_meters['loss'].update(loss.item(), input.size(0))
-            avg_meters['iou'].update(iou, input.size(0))
+            #avg_meters['iou'].update(iou, input.size(0))
 
             postfix = OrderedDict([
                 ('loss', avg_meters['loss'].avg),
-                ('iou', avg_meters['iou'].avg),
+                #('iou', avg_meters['iou'].avg),
             ])
             pbar.set_postfix(postfix)
             pbar.update(1)
@@ -191,14 +193,13 @@ def validate(config, val_loader, model, criterion):
         pbar.close()
 
         outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
-        #outsave2 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
-        #outsave2 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
+
         cv2.imwrite('pred_mask.png', (outsave1 * 255).astype('uint8'))
-        #cv2.imwrite('pred_inv.png', (outsave2 * 255).astype('uint8'))
-        #cv2.imwrite('pred_out.png', (outsave2 * 255).astype('uint8'))
+        np.savetxt('pred.npy', outsave1)
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
-                        ('iou', avg_meters['iou'].avg)])
+                        #('iou', avg_meters['iou'].avg)
+                       ])
 
 
 def main():
@@ -221,11 +222,14 @@ def main():
         yaml.dump(config, f)
 
     # define loss function (criterion)
-    if config['loss'] == 'BCEWithLogitsLoss':
-        criterion = nn.BCEWithLogitsLoss().cuda()
-    else:
-        criterion = losses.__dict__[config['loss']]().cuda()
-
+    #if config['loss'] == 'BCEWithLogitsLoss':
+    #    criterion = nn.BCEWithLogitsLoss().cuda()
+    #else:
+    #    criterion = losses.__dict__[config['loss']]().cuda()
+    
+    loss_weights = torch.tensor([0.1, 0.8, 0.1])
+    criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
+    
     cudnn.benchmark = True
 
     # create model
@@ -321,7 +325,7 @@ def main():
         ('val_iou', []),
     ])
 
-    best_iou = 0
+    best_loss = 1
     trigger = 0
     for epoch in range(config['epochs']):
         print('Epoch [%d/%d]' % (epoch, config['epochs']))
@@ -337,26 +341,32 @@ def main():
             scheduler.step(val_log['loss'])
 
         print('loss %.4f - iou %.4f - val_loss %.4f - val_iou %.4f'
-              % (train_log['loss'], train_log['iou'], val_log['loss'], val_log['iou']))
+              % (train_log['loss'], 
+                 #train_log['iou'], 
+                 val_log['loss'], 
+                 #val_log['iou']
+                ))
 
         log['epoch'].append(epoch)
         log['lr'].append(config['lr'])
         log['loss'].append(train_log['loss'])
-        log['iou'].append(train_log['iou'])
+        #log['iou'].append(train_log['iou'])
         log['val_loss'].append(val_log['loss'])
-        log['val_iou'].append(val_log['iou'])
+        #log['val_iou'].append(val_log['iou'])
 
         pd.DataFrame(log).to_csv('models/%s/log.csv' %
                                  config['name'], index=False)
 
         trigger += 1
 
-        if val_log['iou'] > best_iou:
             torch.save(model.state_dict(), '/lfs/jonas/unetplus/model.pth')
-            best_iou = val_log['iou']
+            #best_iou = val_log['iou']
+            best_loss = val_log['loss']
             print("=> saved best model")
             f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
-            f.write('Epoch: %i, Loss: %f, IOU: %f \n' % (epoch, val_log['loss'], val_log['iou']))
+            f.write('Epoch: %i, Loss: %f' % (epoch, val_log['loss'], 
+                                                         #val_log['iou']
+                                                        ))
             f.close()
             trigger = 0
 

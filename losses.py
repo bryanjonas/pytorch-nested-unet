@@ -54,3 +54,5 @@ class LovaszHingeLoss(nn.Module):
         loss = lovasz_hinge(input, target, per_image=True)
 
         return loss
+
+    
