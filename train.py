@@ -189,7 +189,7 @@ def validate(config, val_loader, model, criterion):
             pbar.update(1)
             
         pbar.close()
-        
+
         outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         #outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         cv2.imwrite('pred_mask.png', (outsave * 255).astype('uint8'))
