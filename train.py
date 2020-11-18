@@ -190,10 +190,12 @@ def validate(config, val_loader, model, criterion):
             
         pbar.close()
 
-        outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
-        #outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
-        cv2.imwrite('pred_mask.png', (outsave * 255).astype('uint8'))
-
+        outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
+        #outsave2 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
+        #outsave2 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
+        cv2.imwrite('pred_mask.png', (outsave1 * 255).astype('uint8'))
+        #cv2.imwrite('pred_inv.png', (outsave2 * 255).astype('uint8'))
+        #cv2.imwrite('pred_out.png', (outsave2 * 255).astype('uint8'))
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
                         ('iou', avg_meters['iou'].avg)])
@@ -270,8 +272,8 @@ def main():
 
     train_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        #transforms.ShiftScaleRotate(shift_limit=0.25, scale_limit=0.5, rotate_limit=180, p=0.5),
-        #transforms.Flip(),
+        transforms.ShiftScaleRotate(shift_limit=0.5, scale_limit=0.5, rotate_limit=180, p=0.5),
+        transforms.Flip(),
     ])
 
     val_transform = Compose([

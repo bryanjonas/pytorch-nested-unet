@@ -52,48 +52,20 @@ class Dataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.img_ids)
     
-    def map_weights(self, mask, w0=10, sigma=5):
-        """
-        Create a UNet weight map from a boolean `mask` where `True`
-        marks the interior pixels of an instance.
-        """
+    def map_weights(self, mask):
         import scipy.ndimage as ndi
         import numpy as np
-        mask = mask.reshape(mask.shape[0], mask.shape[1])
-    
-        #Array must be boolean
-        mask = (mask > 0).astype(int)
-    
-        # if the mask only has one contiguous class,
-        # then there isn't much to do.
-        if len(np.unique(mask)) == 1:
-            mask = mask.reshape(mask.shape[0], mask.shape[1])
-            return np.ones(mask.shape, dtype=np.float32) * 0.5
-
-        # calculate the class-balanced weight map w_c
-        w_c = np.zeros(mask.shape, dtype=np.float32)
-        w_1 = 1 - float(np.count_nonzero(mask)) / w_c.size
-        w_0 = 1 - w_1
-
-        # calculate the distance-weighted emphases w_e
+        
         segs, _ = ndi.label(mask)
         if segs.max() == 1:
-            # if there is only 1 instance plus background,
-            # then there are no separations
-            return w_c
-
+        # if there is only 1 instance plus background,
+        # then there are no separations
+            return np.empty(shape = mask.shape)
         ilabels = range(1, segs.max()+1)
         distmaps = np.stack([ndi.distance_transform_edt(segs != l) for l in ilabels])
         distmaps = np.sort(distmaps, axis=0)[:2]
-
-        w_e = w0 * np.exp((-1 * (distmaps[0] + distmaps[1]) ** 2) / (2 * (sigma ** 2)))
-        w_e[mask] = 0.
-    
-        weight_map = w_e
-    
-        weight_map = weight_map.reshape(weight_map.shape[0], weight_map.shape[1])
-    
-        return weight_map
+        weights = (distmaps[0] / distmaps[0].max())
+        return weights
     
     def find_edges(self, mask):
         import scipy.ndimage as ndi
@@ -110,7 +82,7 @@ class Dataset(torch.utils.data.Dataset):
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
         
-        img = img.reshape(img.shape + (1,))
+        #img = img.reshape(img.shape + (1,))
         
         img = img / 2**11
         
@@ -144,13 +116,20 @@ class Dataset(torch.utils.data.Dataset):
         #for i in range(self.num_classes):
         mask = cv2.imread(os.path.join(self.mask_dir, "0",
                         img_id + self.mask_ext), cv2.IMREAD_GRAYSCALE)
-        #mask_list += [mask]
-        edge = self.find_edges(mask) * 255
-        mask_list += [edge]
-        #weight = self.map_weights(mask, w0=1, sigma=6)
-        #weight = weight > weight.mean()
-        #weight = weight * 255
+        
+        mask_list += [mask]
+        
+        #edge = self.find_edges(mask) * 255
+        #mask_list += [edge]
+        
+        #mask_inv = (255 - mask) / 2
+        #mask_list += [mask_inv]
+        
+        
+        
+        #weight = self.map_weights(mask) * 255
         #mask_list += [weight]
+        
         mask = np.array(mask_list)
         mask = mask.transpose(1, 2, 0)
         
