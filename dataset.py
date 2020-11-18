@@ -84,10 +84,10 @@ class Dataset(torch.utils.data.Dataset):
         
         #img = img.reshape(img.shape + (1,))
         
-        img = img / 2**11
+        #img = img / 2**11
         
-        #img_m = img.mean()
-        #img_sd = img.std()+1e-12
+        img_m = img.mean()
+        img_sd = img.std()+1e-12
         
         #img_m = (465.44523522 / 2**11)
         #img_sd = (166.47386568 / 2**11)
@@ -102,7 +102,7 @@ class Dataset(torch.utils.data.Dataset):
         #img = (img - img_m) / (img_sd)
         
         #Hyperbolic Tangent Normalization    
-        #img = 0.5 * (np.tanh((0.01 * (img - img_m))/img_sd) + 1)
+        img = np.tanh((img - img_m)/img_sd)
         
         #print(img.max())
         #print(img.min())
