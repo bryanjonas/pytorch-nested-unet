@@ -191,7 +191,7 @@ def validate(config, val_loader, model, criterion):
         pbar.close()
         
         outsave = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
-        
+        #outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         cv2.imwrite('pred_mask.png', (outsave * 255).astype('uint8'))
 
         
@@ -270,14 +270,12 @@ def main():
 
     train_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        #transforms.ToFloat(always_apply = True),
-        transforms.ShiftScaleRotate(shift_limit=0.25, scale_limit=0.5, rotate_limit=90, p=0.5),
-        transforms.Flip(p=0.25),
+        #transforms.ShiftScaleRotate(shift_limit=0.25, scale_limit=0.5, rotate_limit=180, p=0.5),
+        #transforms.Flip(),
     ])
 
     val_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        #transforms.ToFloat(always_apply = True),
     ])
 
     train_dataset = Dataset(
