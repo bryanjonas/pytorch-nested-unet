@@ -92,13 +92,13 @@ class Dataset(torch.utils.data.Dataset):
         bldg_mask = np.array(bldg_mask / 255, dtype = np.bool)
         
         edges = self.find_edges(bldg_mask)
-        edges.astype(np.bool)
+        edges = edges.astype(np.bool)
     
-
         mask = np.ones(shape=bldg_mask.shape)
         mask[bldg_mask] = 0
         mask[edges] = 2
         
+  
         if self.transform is not None:
             augmented = self.transform(image=img, mask=mask)
             img = augmented['image']
@@ -106,8 +106,8 @@ class Dataset(torch.utils.data.Dataset):
             
         img = img.astype('float32')
         img = img.transpose(2, 0, 1)
-        mask = mask / 255
         mask = mask.astype('int64')
+
         #mask = mask.transpose(2, 0, 1)
         
         return img, mask, {'img_id': img_id}

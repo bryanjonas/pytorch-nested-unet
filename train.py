@@ -14,11 +14,10 @@ from albumentations.core.composition import Compose, OneOf
 from sklearn.model_selection import train_test_split
 from torch.optim import lr_scheduler
 from tqdm import tqdm
-
+import numpy as np
 import archs
 import losses
 from dataset import Dataset
-from metrics import iou_score
 from utils import AverageMeter, str2bool
 import cv2
 
@@ -110,7 +109,7 @@ def parse_args():
 
 def train(config, train_loader, model, criterion, optimizer):
     avg_meters = {'loss': AverageMeter(),
-                  'iou': AverageMeter()}
+                 'acc': AverageMeter()}
 
     model.train()
 
@@ -119,44 +118,35 @@ def train(config, train_loader, model, criterion, optimizer):
         input = input.cuda()
         target = target.cuda()
 
-        # compute output
-        if config['deep_supervision']:
-            outputs = model(input)
-            loss = 0
-            for output in outputs:
-                loss += criterion(output, target)
-            loss /= len(outputs)
-            #iou = iou_score(outputs[-1], target)
-        else:
-            output = model(input)
-            loss = criterion(output, target)
-            #iou = iou_score(output, target)
-        
+
+        output = model(input)
+        loss = criterion(output, target)
+        _, preds = output.max(1)
+
+        accuracy = (target == preds).float().mean()
+
         # compute gradient and do optimizing step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         avg_meters['loss'].update(loss.item(), input.size(0))
-        #avg_meters['iou'].update(iou, input.size(0))
+        avg_meters['acc'].update(accuracy.item(), input.size(0))
 
         postfix = OrderedDict([
             ('loss', avg_meters['loss'].avg),
-            #('iou', avg_meters['iou'].avg),
-        ])
+            ('acc', avg_meters['acc'].avg)])
         pbar.set_postfix(postfix)
         pbar.update(1)
     pbar.close()
 
     return OrderedDict([('loss', avg_meters['loss'].avg),
-                        #('iou', avg_meters['iou'].avg)
-                       ])
+                       ('acc', avg_meters['acc'].avg)])
 
 
 def validate(config, val_loader, model, criterion):
     avg_meters = {'loss': AverageMeter(),
-                  #'iou': AverageMeter()
-                 }
+                 'acc': AverageMeter()}
 
     # switch to evaluate mode
     model.eval()
@@ -167,39 +157,34 @@ def validate(config, val_loader, model, criterion):
             input = input.cuda()
             target = target.cuda()
 
-            # compute output
-            if config['deep_supervision']:
-                outputs = model(input)
-                loss = 0
-                for output in outputs:
-                    loss += criterion(output, target)
-                loss /= len(outputs)
-                #iou = iou_score(outputs[-1], target)
-            else:
-                output = model(input)
-                loss = criterion(output, target)
-                #iou = iou_score(output, target)
+            output = model(input)
+            loss = criterion(output, target)
+            _, preds = output.max(1)
+            accuracy = (target == preds).float().mean()
             
             avg_meters['loss'].update(loss.item(), input.size(0))
-            #avg_meters['iou'].update(iou, input.size(0))
+            avg_meters['acc'].update(accuracy.item(), input.size(0))
 
             postfix = OrderedDict([
                 ('loss', avg_meters['loss'].avg),
-                #('iou', avg_meters['iou'].avg),
-            ])
+                ('acc', avg_meters['acc'].avg)])
             pbar.set_postfix(postfix)
             pbar.update(1)
             
         pbar.close()
 
-        outsave1 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
-
-        cv2.imwrite('pred_mask.png', (outsave1 * 255).astype('uint8'))
-        np.savetxt('pred.npy', outsave1)
+        outsave0 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
+        outsave1 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
+        outsave2 = torch.sigmoid(output[-1,2,:,:]).cpu().numpy()
+        cv2.imwrite('pred_bldg.png', (outsave0 * 255).astype('uint8'))
+        cv2.imwrite('pred_back.png', (outsave1 * 255).astype('uint8'))
+        cv2.imwrite('pred_out.png', (outsave2 * 255).astype('uint8'))
+        np.savetxt('bldg.npy', outsave0)
+        np.savetxt('back.npy', outsave1)
+        np.savetxt('out.npy', outsave2)
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
-                        #('iou', avg_meters['iou'].avg)
-                       ])
+                        ('acc', avg_meters['acc'].avg)])
 
 
 def main():
@@ -320,12 +305,12 @@ def main():
         ('epoch', []),
         ('lr', []),
         ('loss', []),
-        ('iou', []),
+        ('acc', []),
         ('val_loss', []),
-        ('val_iou', []),
-    ])
+        ('val_acc',[])
+        ])
 
-    best_loss = 1
+    best_acc = 0
     trigger = 0
     for epoch in range(config['epochs']):
         print('Epoch [%d/%d]' % (epoch, config['epochs']))
@@ -340,33 +325,31 @@ def main():
         elif config['scheduler'] == 'ReduceLROnPlateau':
             scheduler.step(val_log['loss'])
 
-        print('loss %.4f - iou %.4f - val_loss %.4f - val_iou %.4f'
-              % (train_log['loss'], 
-                 #train_log['iou'], 
-                 val_log['loss'], 
-                 #val_log['iou']
+        print('loss %.4f - acc %.4f - val_loss %.4f - val_acc %.4f'
+              % (train_log['loss'],
+                 train_log['acc'],
+                 val_log['loss'],
+                 val_log['acc']
                 ))
 
         log['epoch'].append(epoch)
         log['lr'].append(config['lr'])
         log['loss'].append(train_log['loss'])
-        #log['iou'].append(train_log['iou'])
+        log['acc'].append(train_log['acc'])
         log['val_loss'].append(val_log['loss'])
-        #log['val_iou'].append(val_log['iou'])
+        log['val_acc'].append(val_log['acc'])
 
         pd.DataFrame(log).to_csv('models/%s/log.csv' %
                                  config['name'], index=False)
 
         trigger += 1
 
+        if val_log['acc'] > best_acc:
             torch.save(model.state_dict(), '/lfs/jonas/unetplus/model.pth')
-            #best_iou = val_log['iou']
-            best_loss = val_log['loss']
+            best_acc = val_log['acc']
             print("=> saved best model")
             f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
-            f.write('Epoch: %i, Loss: %f' % (epoch, val_log['loss'], 
-                                                         #val_log['iou']
-                                                        ))
+            f.write('Epoch: %i, Loss: %f, Acc: %f' % (epoch, val_log['loss'], val_log['acc']))
             f.close()
             trigger = 0
 
