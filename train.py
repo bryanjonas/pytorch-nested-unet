@@ -209,7 +209,7 @@ def main():
     with open('models/%s/config.yml' % config['name'], 'w') as f:
         yaml.dump(config, f)
     
-    loss_weights = torch.tensor([0.8, 0.1, 0.1])
+    loss_weights = torch.tensor([0.1, 0.7, 0.2])
     criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
     
     cudnn.benchmark = True
@@ -264,6 +264,8 @@ def main():
 
     val_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
+        transforms.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.15, rotate_limit=180, p=0.5),
+        transforms.Flip(),
     ])
 
     train_dataset = Dataset(
