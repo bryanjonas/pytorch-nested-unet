@@ -175,19 +175,15 @@ def validate(config, val_loader, model, criterion):
         insave0 = input[-1,:,:,:].cpu().numpy()
         insave0 = insave0.transpose(1,2,0)
         cv2.imwrite("pred_img.png", insave0)
-
-        targsave0 = target[0,:,:].cpu().numpy()
-        targsave1 = target[1,:,:].cpu().numpy()
-        targsave2 = target[2,:,:].cpu().numpy()
-        np.savetxt('bldg-targ.npy', targsave0)
-        np.savetxt('back-targ.npy', targsave1)
-        np.savetxt('out-targ.npy', targsave2)
+        
+        targsave0 = target[-1,:,:].cpu().numpy()
+        np.savetxt('target.npy', targsave0)
  
         outsave0 = torch.sigmoid(output[-1,0,:,:]).cpu().numpy()
         outsave1 = torch.sigmoid(output[-1,1,:,:]).cpu().numpy()
         outsave2 = torch.sigmoid(output[-1,2,:,:]).cpu().numpy()
-        np.savetxt('bldg.npy', outsave0)
-        np.savetxt('back.npy', outsave1)
+        np.savetxt('bldg.npy', outsave1)
+        np.savetxt('back.npy', outsave0)
         np.savetxt('out.npy', outsave2)
         
     return OrderedDict([('loss', avg_meters['loss'].avg),
@@ -212,9 +208,8 @@ def main():
 
     with open('models/%s/config.yml' % config['name'], 'w') as f:
         yaml.dump(config, f)
-        
-    # weight given to loss for pixels of background, building interior and building border classes
-    loss_weights = torch.tensor([0.1, 0.8, 0.1])
+    
+    loss_weights = torch.tensor([0.8, 0.1, 0.1])
     criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
     
     cudnn.benchmark = True
@@ -263,7 +258,7 @@ def main():
 
     train_transform = Compose([
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        transforms.ShiftScaleRotate(shift_limit=0.5, scale_limit=0.5, rotate_limit=180, p=0.5),
+        transforms.ShiftScaleRotate(shift_limit=0.10, scale_limit=0.25, rotate_limit=180, p=0.5),
         transforms.Flip(),
     ])
 
@@ -299,9 +294,9 @@ def main():
     val_loader = torch.utils.data.DataLoader(
         val_dataset,
         batch_size=config['batch_size'],
-        shuffle=False,
+        shuffle=True,
         num_workers=config['num_workers'],
-        drop_last=False)
+        drop_last=True)
 
     log = OrderedDict([
         ('epoch', []),
@@ -351,7 +346,7 @@ def main():
             best_acc = val_log['acc']
             print("=> saved best model")
             f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
-            f.write('Epoch: %i, Loss: %f, Acc: %f' % (epoch, val_log['loss'], val_log['acc']))
+            f.write('Epoch: %i, Loss: %f, Acc: %f \n' % (epoch, val_log['loss'], val_log['acc']))
             f.close()
             trigger = 0
 
