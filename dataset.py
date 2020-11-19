@@ -65,7 +65,7 @@ class Dataset(torch.utils.data.Dataset):
         img_id = self.img_ids[idx]
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
-        
+        #Turn on/off for PAN/RGB
         #img = img.reshape(img.shape + (1,))
         
         img = (img / 2**11) * 255
@@ -103,7 +103,7 @@ class Dataset(torch.utils.data.Dataset):
             augmented = self.transform(image=img, mask=mask)
             img = augmented['image']
             mask = augmented['mask']
-            
+        
         img = img.astype('float32')
         img = img.transpose(2, 0, 1)
         mask = mask.astype('int64')

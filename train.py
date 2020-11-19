@@ -75,7 +75,7 @@ def parse_args():
                         help='loss: ' +
                         ' | '.join(['Adam', 'SGD']) +
                         ' (default: Adam)')
-    parser.add_argument('--lr', '--learning_rate', default=1e-3, type=float,
+    parser.add_argument('--lr', '--learning_rate', default=5e-4, type=float,
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--momentum', default=0.9, type=float,
                         help='momentum')
@@ -209,7 +209,7 @@ def main():
     with open('models/%s/config.yml' % config['name'], 'w') as f:
         yaml.dump(config, f)
     
-    loss_weights = torch.tensor([0.1, 0.7, 0.2])
+    loss_weights = torch.tensor([0.2, 0.7, 0.1])
     criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
     
     cudnn.benchmark = True
@@ -257,15 +257,15 @@ def main():
     val_img_ids = [os.path.splitext(os.path.basename(p))[0] for p in val_img_ids]
 
     train_transform = Compose([
+        #transforms.ShiftScaleRotate(shift_limit=0.10, scale_limit=0.25, rotate_limit=180, p=0.5),
+        #transforms.Flip(),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        transforms.ShiftScaleRotate(shift_limit=0.10, scale_limit=0.25, rotate_limit=180, p=0.5),
-        transforms.Flip(),
     ])
 
     val_transform = Compose([
+        #transforms.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.15, rotate_limit=180, p=0.5),
+        #transforms.Flip(),
         transforms.RandomCrop(config['input_h'], config['input_w']),
-        transforms.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.15, rotate_limit=180, p=0.5),
-        transforms.Flip(),
     ])
 
     train_dataset = Dataset(
