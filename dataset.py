@@ -65,18 +65,19 @@ class Dataset(torch.utils.data.Dataset):
         img_id = self.img_ids[idx]
         
         img = imread(os.path.join(self.img_dir, img_id + self.img_ext))
+        
         #Turn on/off for PAN/RGB
-        #img = img.reshape(img.shape + (1,))
+        img = img.reshape(img.shape + (1,))
         
         img = (img / 2**11) * 255
         
-        #img_m = img.mean()
-        #img_sd = img.std()+1e-12
+        img_m = img.mean()
+        img_sd = img.std()+1e-12
         
         #img_m = (465.44523522 / 2**11)
         #img_sd = (166.47386568 / 2**11)
         
-        #img = (img - img_m) / (img_sd)
+        img = (img - img_m) / (img_sd)
         
         #print(img.max())
         #print(img.min())

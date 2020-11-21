@@ -209,7 +209,8 @@ def main():
     with open('models/%s/config.yml' % config['name'], 'w') as f:
         yaml.dump(config, f)
     
-    loss_weights = torch.tensor([0.2, 0.7, 0.1])
+    loss_weights = torch.tensor([0.25, 0.70, 0.05])
+
     criterion = nn.CrossEntropyLoss(weight=loss_weights).cuda()
     
     cudnn.benchmark = True
@@ -330,6 +331,9 @@ def main():
                  val_log['loss'],
                  val_log['acc']
                 ))
+        f = open('/lfs/jonas/unetplus/model_train_info.txt', 'a')
+        f.write('Epoch: %i, Loss: %f, Acc: %f \n' % (epoch, val_log['loss'], val_log['acc']))
+        f.close()
 
         log['epoch'].append(epoch)
         log['lr'].append(config['lr'])
@@ -347,7 +351,7 @@ def main():
             torch.save(model.state_dict(), '/lfs/jonas/unetplus/model.pth')
             best_acc = val_log['acc']
             print("=> saved best model")
-            f = open('/lfs/jonas/unetplus/model_info.txt', 'a')
+            f = open('/lfs/jonas/unetplus/model_save_info.txt', 'a')
             f.write('Epoch: %i, Loss: %f, Acc: %f \n' % (epoch, val_log['loss'], val_log['acc']))
             f.close()
             trigger = 0
